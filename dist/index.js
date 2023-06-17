@@ -45,9 +45,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
-const linuxPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION}}_linux_amd64.tar.gz';
-const darwinPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION}}_macOS_amd64.tar.gz';
-const windowsPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION}}_windows_amd64.zip';
+const linuxPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_linux_amd64.tar.gz';
+const darwinPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_macOS_amd64.tar.gz';
+const windowsPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_windows_amd64.zip';
 function getLatestReleaseVersion() {
     return __awaiter(this, void 0, void 0, function* () {
         const apiUrl = `https://api.github.com/repos/planetscale/cli/releases/latest`;
@@ -70,22 +70,23 @@ function run() {
             else {
                 packageUrl = linuxPackageUrl;
             }
+            let latestVersion = '';
             if (version === 'latest') {
-                const latestVersion = yield getLatestReleaseVersion();
+                latestVersion = yield getLatestReleaseVersion();
                 core.debug(`latest version: ${version}`);
                 packageUrl = packageUrl
                     .replace(/{{VERSION}}/g, latestVersion)
-                    .replace(/v(\d+\.\d+\.\d+)/, '$1');
+                    .replace(/{{VERSION2}}/g, latestVersion.replace(/^v/, ''));
             }
             else {
                 packageUrl = packageUrl
                     .replace(/{{VERSION}}/g, version)
-                    .replace(/v(\d+\.\d+\.\d+)/, '$1');
+                    .replace(/{{VERSION2}}/g, version.replace(/^v/, ''));
             }
             core.debug(`package url: ${packageUrl}`);
             const downloadedPackagePath = yield tc.downloadTool(packageUrl);
             const extractedFolder = yield tc.extractTar(downloadedPackagePath, 'tools/pscale');
-            const packagePath = yield tc.cacheDir(extractedFolder, 'pscale', version);
+            const packagePath = yield tc.cacheDir(extractedFolder, 'pscale', version === 'latest' ? latestVersion : version);
             core.addPath(packagePath);
         }
         catch (error) {
