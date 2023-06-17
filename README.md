@@ -1,4 +1,4 @@
-# Setup `pscale` Action
+# PlanetScale CLI for GitHub Actions
 
 Use this Action to install `pscale` on your actions runner. Works with Linux, Mac and Windows runners.
 
@@ -30,3 +30,7 @@ Build the typescript and package it for distribution
 ```bash
 $ npm run build && npm run package
 ```
+
+## License
+
+The action is available as open source under the terms of the [Apache 2.0 License](https://opensource.org/license/apache-2-0/).``
