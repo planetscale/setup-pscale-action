@@ -33,4 +33,4 @@ $ npm run build && npm run package
 
 ## License
 
-The action is available as open source under the terms of the [Apache 2.0 License](https://opensource.org/license/apache-2-0/).``
+The action is available as open source under the terms of the [Apache 2.0 License](https://opensource.org/license/apache-2-0/).
