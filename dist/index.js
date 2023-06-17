@@ -41,12 +41,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
-const packageUrl = 'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_linux_amd64.tar.gz';
+const linuxPackageUrl = 'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_linux_amd64.tar.gz';
+const darwinPackageUrl = 'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_macOS_amd64.tar.gz';
+const windowsPackageUrl = 'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_windows_amd64.zip';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            let packageUrl = '';
+            if (process.platform === 'win32') {
+                packageUrl = windowsPackageUrl;
+            }
+            else if (process.platform === 'darwin') {
+                packageUrl = darwinPackageUrl;
+            }
+            else {
+                packageUrl = linuxPackageUrl;
+            }
             const downloadedPackagePath = yield tc.downloadTool(packageUrl);
-            const extractedFolder = yield tc.extractTar(downloadedPackagePath, 'path/to/extract/to');
+            const extractedFolder = yield tc.extractTar(downloadedPackagePath, 'tools/pscale');
             const packagePath = yield tc.cacheDir(extractedFolder, 'pscale', '0.147.0');
             core.addPath(packagePath);
         }
