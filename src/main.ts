@@ -16,7 +16,7 @@ async function run(): Promise<void> {
       'deb'
     )
 
-    await exec.exec('sudo dpkg -i ' + packagePath)
+    core.addPath(packagePath);
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message)
