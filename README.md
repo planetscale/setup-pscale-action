@@ -15,7 +15,7 @@ Use this Action to install `pscale` on your actions runner. Works with Linux, Ma
     pscale deploy-request list my-db --org my-org
 ```
 
-Setting the `version` is optional. When omitted, the action will download the latest version.
+Setting the `version` is optional. When omitted, the action will download the latest version. [See full list of releases](https://github.com/planetscale/cli/releases).
 
 Be sure to [setup a service token](https://planetscale.com/docs/concepts/service-tokens) with the proper permissions and add it to your repositories secrets.
 
