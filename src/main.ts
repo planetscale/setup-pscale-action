@@ -1,5 +1,6 @@
-import * as core from '@actions/core'
-import * as tc from '@actions/tool-cache'
+import * as core from '@actions/core';
+import * as tc from '@actions/tool-cache';
+import axios from 'axios';
 
 const linuxPackageUrl =
   'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_linux_amd64.tar.gz'
@@ -8,30 +9,45 @@ const darwinPackageUrl =
 const windowsPackageUrl =
   'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_windows_amd64.zip'
 
+async function getLatestReleaseVersion(): Promise<string> {
+  const apiUrl = `https://api.github.com/repos/planetscale/cli/releases/latest`;
+  const response = await axios.get(apiUrl);
+  return response.data.tag_name;
+}
+
 async function run(): Promise<void> {
   try {
-    let packageUrl = ''
+    const version = core.getInput('version') || 'latest';
+
+    core.debug(`requested version: ${version}`);
+
+    let packageUrl = '';
     if (process.platform === 'win32') {
-      packageUrl = windowsPackageUrl
+      packageUrl = windowsPackageUrl;
     } else if (process.platform === 'darwin') {
-      packageUrl = darwinPackageUrl
+      packageUrl = darwinPackageUrl;
     } else {
-      packageUrl = linuxPackageUrl
+      packageUrl = linuxPackageUrl;
     }
 
-    const downloadedPackagePath = await tc.downloadTool(packageUrl)
-    const extractedFolder = await tc.extractTar(
-      downloadedPackagePath,
-      'tools/pscale'
-    )
+    if (version === 'latest') {
+      const latestVersion = await getLatestReleaseVersion();
+      core.debug(`latest version: ${version}`);
+      packageUrl = packageUrl.replace(/v\d+\.\d+\.\d+/, latestVersion);
+    } else {
+      packageUrl = packageUrl.replace(/v\d+\.\d+\.\d+/, version);
+    }
 
-    const packagePath = await tc.cacheDir(extractedFolder, 'pscale', '0.147.0')
-    core.addPath(packagePath)
+    const downloadedPackagePath = await tc.downloadTool(packageUrl);
+    const extractedFolder = await tc.extractTar(downloadedPackagePath, 'tools/pscale');
+
+    const packagePath = await tc.cacheDir(extractedFolder, 'pscale', version);
+    core.addPath(packagePath);
   } catch (error) {
     if (error instanceof Error) {
-      core.setFailed(error.message)
+      core.setFailed(error.message);
     }
   }
 }
 
-run()
+run();

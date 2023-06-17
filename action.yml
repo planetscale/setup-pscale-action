@@ -1,6 +1,11 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Setup pscale'
+description: 'Installs the PlanetScale CLI'
+author: 'PlanetScale'
+inputs:
+  version: 
+    description: 'Version of pscale to install. i.e. v0.106.0. Defaults to latest version.'
+    required: false
+    default: 'latest'
 runs:
   using: 'node16'
   main: 'dist/index.js'
