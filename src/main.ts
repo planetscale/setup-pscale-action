@@ -3,11 +3,11 @@ import * as tc from '@actions/tool-cache';
 import axios from 'axios';
 
 const linuxPackageUrl =
-  'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_linux_amd64.tar.gz'
+  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION}}_linux_amd64.tar.gz'
 const darwinPackageUrl =
-  'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_macOS_amd64.tar.gz'
+  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION}}_macOS_amd64.tar.gz'
 const windowsPackageUrl =
-  'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_windows_amd64.zip'
+  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION}}_windows_amd64.zip'
 
 async function getLatestReleaseVersion(): Promise<string> {
   const apiUrl = `https://api.github.com/repos/planetscale/cli/releases/latest`;
@@ -33,10 +33,16 @@ async function run(): Promise<void> {
     if (version === 'latest') {
       const latestVersion = await getLatestReleaseVersion();
       core.debug(`latest version: ${version}`);
-      packageUrl = packageUrl.replace(/v\d+\.\d+\.\d+/, latestVersion);
+      packageUrl = packageUrl
+        .replace(/{{VERSION}}/g, latestVersion)
+        .replace(/v(\d+\.\d+\.\d+)/, '$1');
     } else {
-      packageUrl = packageUrl.replace(/v\d+\.\d+\.\d+/, version);
+      packageUrl = packageUrl
+        .replace(/{{VERSION}}/g, version)
+        .replace(/v(\d+\.\d+\.\d+)/, '$1');
     }
+
+    core.debug(`package url: ${packageUrl}`);
 
     const downloadedPackagePath = await tc.downloadTool(packageUrl);
     const extractedFolder = await tc.extractTar(downloadedPackagePath, 'tools/pscale');
