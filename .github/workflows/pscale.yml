@@ -1,0 +1,15 @@
+name: Test pscale install
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup pscale
+        uses: ./
+      
+      - name: Use pscale
+        run: pscale help
