@@ -47,7 +47,7 @@ function run() {
         try {
             const downloadedPackagePath = yield tc.downloadTool(packageUrl);
             const extractedFolder = yield tc.extractTar(downloadedPackagePath, 'path/to/extract/to');
-            const packagePath = yield tc.cacheFile(extractedFolder, 'pscale.tar.gz', 'pscale', '0.147.0', 'tar.gz');
+            const packagePath = yield tc.cacheDir(extractedFolder, 'pscale', '0.147.0');
             core.addPath(packagePath);
         }
         catch (error) {
