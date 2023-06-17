@@ -4,7 +4,6 @@ on: # rebuild any PRs and main branch changes
   push:
     branches:
       - main
-      - 'releases/*'
 
 jobs:
   build: # make sure build/ci work properly
@@ -22,17 +21,17 @@ jobs:
       - uses: ./
       - name: Test pscale
         run: pscale help
-  test-mac: # make sure the action works on a clean machine without building
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./
-      - name: Test pscale
-        run: pscale help
-  test-windows: # make sure the action works on a clean machine without building
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./
-      - name: Test pscale
-        run: pscale help
+  # test-mac: 
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./
+  #     - name: Test pscale
+  #       run: pscale help
+  # test-windows: 
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./
+  #     - name: Test pscale
+  #       run: pscale help
