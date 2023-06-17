@@ -2,7 +2,7 @@
 
 Use this Action to install `pscale` on your actions runner. Works with Linux, Mac and Windows runners.
 
-```
+```yaml
 - name: Setup pscale
   uses: planetscale/setup-pscale-action@main
   with:
