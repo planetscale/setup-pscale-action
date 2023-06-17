@@ -41,12 +41,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
-const packageUrl = 'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_linux_amd64.deb';
+const packageUrl = 'https://github.com/planetscale/cli/releases/download/v0.147.0/pscale_0.147.0_linux_amd64.tar.gz';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const downloadedPackagePath = yield tc.downloadTool(packageUrl);
-            const packagePath = yield tc.cacheFile(downloadedPackagePath, 'pscale.deb', 'pscale', '0.147.0', 'deb');
+            const extractedFolder = yield tc.extractTar(downloadedPackagePath, 'path/to/extract/to');
+            const packagePath = yield tc.cacheFile(extractedFolder, 'pscale.tar.gz', 'pscale', '0.147.0', 'tar.gz');
             core.addPath(packagePath);
         }
         catch (error) {
