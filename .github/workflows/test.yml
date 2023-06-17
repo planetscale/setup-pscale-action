@@ -19,8 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./
+        with:
+          version: v0.146.0
       - name: Test pscale
-        run: pscale help
+        run: |
+          pscale help
+          pscale --version
   # test-mac: 
   #   runs-on: macos-latest
   #   steps:
