@@ -55,10 +55,17 @@ function getLatestReleaseVersion() {
         return response.data.tag_name;
     });
 }
+function validateVersion(version) {
+    const versionPattern = /^v\d+\.\d+\.\d+$/;
+    if (version !== 'latest' && !versionPattern.test(version)) {
+        throw new Error(`Invalid version format: ${version}. Please use the format "vX.X.X" or "latest". See: https://github.com/planetscale/cli/releases for available releases.`);
+    }
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const version = core.getInput('version') || 'latest';
+            validateVersion(version);
             core.debug(`requested version: ${version}`);
             let packageUrl = '';
             if (process.platform === 'win32') {
