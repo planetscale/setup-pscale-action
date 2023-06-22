@@ -19,7 +19,7 @@ Be sure to [setup a service token](https://planetscale.com/docs/concepts/service
 
 Setting the `version` is optional. When omitted, the action will download the latest version. [See full list of releases](https://github.com/planetscale/cli/releases).
 
-```
+```yaml
 - name: Setup pscale
   uses: planetscale/setup-pscale-action@v1
   with:
