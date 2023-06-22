@@ -1,0 +1,19 @@
+---
+- - :permit
+  - Apache 2.0
+  - :who:
+    :why:
+    :versions: []
+    :when: 2023-06-22 13:14:24.418110000 Z
+- - :permit
+  - MIT
+  - :who:
+    :why:
+    :versions: []
+    :when: 2023-06-22 13:14:31.692803000 Z
+- - :approve
+  - "@typescript-eslint/parser"
+  - :who:
+    :why:
+    :versions: []
+    :when: 2023-06-22 13:15:08.086724000 Z
