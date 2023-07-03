@@ -1,6 +1,8 @@
 name: 'Setup pscale'
 description: 'Installs the PlanetScale CLI'
 author: 'PlanetScale'
+icon: 'database'
+color: 'gray-dark'
 inputs:
   version: 
     description: 'Version of pscale to install. i.e. v0.106.0. Defaults to latest version.'
