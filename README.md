@@ -26,6 +26,9 @@ Setting the `version` is optional. When omitted, the action will download the la
     version: v0.147.0
 ```
 
+## Examples
+See the [examples doc](https://github.com/planetscale/setup-pscale-action/blob/main/examples.md) for ideas on how to use `pscale` in your Actions workflows.
+
 ## Development
 
 Install the dependencies  
