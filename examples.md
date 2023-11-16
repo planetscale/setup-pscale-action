@@ -48,22 +48,25 @@ This makes `${{ env.PSCALE_BRANCH_NAME }}` available for use in the rest of the 
 Use the [`create-branch-action`](https://github.com/planetscale/create-branch-action) to setup a new branch.
 
 ```yaml
-- name: Create a branch
-  uses: planetscale/create-branch-action@v4
-  id: create_branch
-  with:
-    org_name: ${{ secrets.PLANETSCALE_ORG_NAME }}
-    database_name: ${{ secrets.PLANETSCALE_DATABASE_NAME }}
-    branch_name: ${{ env.PSCALE_BRANCH_NAME }}
-    from: main
-    check_exists: true
-    wait: true
+- name: Create branch
   env:
     PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
     PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
+  run: |
+    set +e
+    pscale branch show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }}
+    exit_code=$?
+    set -e
+
+    if [ $exit_code -eq 0 ]; then
+      echo "Branch exists. Skipping branch creation."
+    else
+      echo "Branch does not exist. Creating."
+      pscale branch create ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }} --wait
+    fi
 ```
 
-Notice that we have set `check_exists` and `wait`. If the branch already exists, it will use the existing branch. When creating, it will wait for the branch to be fully ready before moving onto the next step.
+Notice that we first check if the branch exists. If it does, we do nothing. Otherwise we create it and pass the `--wait` flag.
 
 This is useful when running in CI, as the workflow may run multiple times and you'll want the branch ready if you are running schema migrations immediately after creating the branch.
 
@@ -76,7 +79,7 @@ We can use `pscale deploy-requests show` to grab the latest deploy request by br
     PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
     PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
   run: |
-    deploy_request_number=$(pscale deploy-request show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ github.head_ref }} -f json | jq -r '.number')
+    deploy_request_number=$(pscale deploy-request show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }} -f json | jq -r '.number')
     echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> $GITHUB_ENV
 ```
 
@@ -149,19 +152,24 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      - name: Create a branch
-        uses: planetscale/create-branch-action@v4
-        id: create_branch
-        with:
-          org_name: ${{ secrets.PLANETSCALE_ORG_NAME }}
-          database_name: ${{ secrets.PLANETSCALE_DATABASE_NAME }}
-          branch_name: ${{ github.head_ref }}
-          from: main
-          check_exists: true
-          wait: true
+      - name: Set branch name
+        run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Create branch
         env:
           PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
           PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
+        run: |
+          set +e
+          pscale branch show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }}
+          exit_code=$?
+          set -e
+      
+          if [ $exit_code -eq 0 ]; then
+            echo "Branch exists. Skipping branch creation."
+          else
+            echo "Branch does not exist. Creating."
+            pscale branch create ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }} --wait
+          fi
       - uses: actions/checkout@v3
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -183,7 +191,7 @@ jobs:
         run: |
           echo "org: ${{ secrets.PLANETSCALE_ORG_NAME }}" > .pscale.yml
           echo "database: ${{ secrets.PLANETSCALE_DATABASE_NAME }}" >> .pscale.yml
-          echo "branch: ${{ github.head_ref }}" >> .pscale.yml
+          echo "branch: ${{ env.PSCALE_BRANCH_NAME }}" >> .pscale.yml
       - name: Setup pscale
         uses: planetscale/setup-pscale-action@v1
       - name: Run migrations
@@ -196,7 +204,7 @@ jobs:
         run: |
           if grep -q "migrated" migration-output.txt; then
             echo "DB_MIGRATED=true" >> $GITHUB_ENV
-            if pscale deploy-request create ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ github.head_ref }}; then
+            if pscale deploy-request create ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }}; then
               cat migration-output.txt
               echo "DR_OPENED=true" >> $GITHUB_ENV
               echo "Deploy request successfully opened"
@@ -218,7 +226,7 @@ jobs:
           PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
           PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
         run: |
-          deploy_request_number=$(pscale deploy-request show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ github.head_ref }} -f json | jq -r '.number')
+          deploy_request_number=$(pscale deploy-request show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }} -f json | jq -r '.number')
           echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> $GITHUB_ENV
       - name: Comment PR - db migrated
         if: ${{ env.DR_OPENED }}
@@ -263,13 +271,15 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup pscale
         uses: planetscale/setup-pscale-action@v1
+      - name: Set branch name
+        run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
       - name: Get Deploy Requests
         if: github.event.pull_request.merged == true
         env:
           PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
           PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
         run: |
-          deploy_request_number=$(pscale deploy-request show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ github.head_ref }} --org ${{ secrets.PLANETSCALE_ORG_NAME }} -f json | jq -r '.number')
+          deploy_request_number=$(pscale deploy-request show ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }} --org ${{ secrets.PLANETSCALE_ORG_NAME }} -f json | jq -r '.number')
           echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> $GITHUB_ENV
 
       - name: Deploy schema migrations
