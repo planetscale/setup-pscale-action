@@ -45,7 +45,7 @@ Since git branch names allow more possibilities, we can use the following code t
 This makes `${{ env.PSCALE_BRANCH_NAME }}` available for use in the rest of the workflow.
 
 ### Create a PlanetScale branch
-Use the [`create-branch-action`](https://github.com/planetscale/create-branch-action) to setup a new branch.
+You can use `pscale` to create a branch that matches your GitHub branch name.
 
 ```yaml
 - name: Create branch
