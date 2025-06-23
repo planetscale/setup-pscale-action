@@ -63,11 +63,11 @@ function validateVersion(version) {
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        let packageUrl = '';
         try {
             const version = core.getInput('version') || 'latest';
             validateVersion(version);
             core.debug(`requested version: ${version}`);
-            let packageUrl = '';
             if (process.platform === 'win32') {
                 packageUrl = windowsPackageUrl;
             }
@@ -98,7 +98,7 @@ function run() {
         }
         catch (error) {
             if (error instanceof Error) {
-                core.setFailed(error.message);
+                core.setFailed(`pscale was unable to be installed from GitHub. URL: ${packageUrl}. Error: ${error.message}`);
             }
         }
     });
