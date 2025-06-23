@@ -23,13 +23,12 @@ function validateVersion(version: string): void {
 }
 
 async function run(): Promise<void> {
+  let packageUrl = '';
   try {
     const version = core.getInput('version') || 'latest';
     validateVersion(version);
 
     core.debug(`requested version: ${version}`);
-
-    let packageUrl = '';
     if (process.platform === 'win32') {
       packageUrl = windowsPackageUrl;
     } else if (process.platform === 'darwin') {
@@ -61,7 +60,7 @@ async function run(): Promise<void> {
     core.addPath(packagePath);
   } catch (error) {
     if (error instanceof Error) {
-      core.setFailed(error.message);
+      core.setFailed(`pscale was unable to be installed from GitHub. URL: ${packageUrl}. Error: ${error.message}`);
     }
   }
 }
