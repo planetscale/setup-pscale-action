@@ -22,6 +22,11 @@ function validateVersion(version: string): void {
   }
 }
 
+async function getTodaysCacheKey(): Promise<string> {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  return `latest-${today}`;
+}
+
 async function run(): Promise<void> {
   let packageUrl = '';
   try {
@@ -38,13 +43,37 @@ async function run(): Promise<void> {
     }
 
     let latestVersion = '';
+    let cacheKey = '';
+
     if (version === 'latest') {
+      // Use daily cache key to avoid API calls within the same day
+      cacheKey = await getTodaysCacheKey();
+
+      // Check if we have a cached version from today
+      const cachedPath = tc.find('pscale', cacheKey);
+      if (cachedPath) {
+        core.debug(`Using cached pscale from today: ${cachedPath}`);
+        core.addPath(cachedPath);
+        return;
+      }
+
+      // No cache found for today, fetch latest version
       latestVersion = await getLatestReleaseVersion();
-      core.debug(`latest version: ${version}`);
+      core.debug(`latest version: ${latestVersion}`);
       packageUrl = packageUrl
         .replace(/{{VERSION}}/g, latestVersion)
         .replace(/{{VERSION2}}/g, latestVersion.replace(/^v/, ''));
     } else {
+      cacheKey = version;
+
+      // Check if specific version is already cached
+      const cachedPath = tc.find('pscale', cacheKey);
+      if (cachedPath) {
+        core.debug(`Using cached pscale version ${version}: ${cachedPath}`);
+        core.addPath(cachedPath);
+        return;
+      }
+
       packageUrl = packageUrl
         .replace(/{{VERSION}}/g, version)
         .replace(/{{VERSION2}}/g, version.replace(/^v/, ''));
@@ -55,7 +84,7 @@ async function run(): Promise<void> {
     const downloadedPackagePath = await tc.downloadTool(packageUrl);
     const extractedFolder = await tc.extractTar(downloadedPackagePath, 'tools/pscale');
 
-    const packagePath = await tc.cacheDir(extractedFolder, 'pscale', version === 'latest' ? latestVersion : version);
+    const packagePath = await tc.cacheDir(extractedFolder, 'pscale', cacheKey);
 
     core.addPath(packagePath);
   } catch (error) {

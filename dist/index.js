@@ -61,6 +61,12 @@ function validateVersion(version) {
         throw new Error(`Invalid version format: ${version}. Please use the format "vX.X.X" or "latest". See: https://github.com/planetscale/cli/releases for available releases.`);
     }
 }
+function getTodaysCacheKey() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        return `latest-${today}`;
+    });
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         let packageUrl = '';
@@ -78,14 +84,33 @@ function run() {
                 packageUrl = linuxPackageUrl;
             }
             let latestVersion = '';
+            let cacheKey = '';
             if (version === 'latest') {
+                // Use daily cache key to avoid API calls within the same day
+                cacheKey = yield getTodaysCacheKey();
+                // Check if we have a cached version from today
+                const cachedPath = tc.find('pscale', cacheKey);
+                if (cachedPath) {
+                    core.debug(`Using cached pscale from today: ${cachedPath}`);
+                    core.addPath(cachedPath);
+                    return;
+                }
+                // No cache found for today, fetch latest version
                 latestVersion = yield getLatestReleaseVersion();
-                core.debug(`latest version: ${version}`);
+                core.debug(`latest version: ${latestVersion}`);
                 packageUrl = packageUrl
                     .replace(/{{VERSION}}/g, latestVersion)
                     .replace(/{{VERSION2}}/g, latestVersion.replace(/^v/, ''));
             }
             else {
+                cacheKey = version;
+                // Check if specific version is already cached
+                const cachedPath = tc.find('pscale', cacheKey);
+                if (cachedPath) {
+                    core.debug(`Using cached pscale version ${version}: ${cachedPath}`);
+                    core.addPath(cachedPath);
+                    return;
+                }
                 packageUrl = packageUrl
                     .replace(/{{VERSION}}/g, version)
                     .replace(/{{VERSION2}}/g, version.replace(/^v/, ''));
@@ -93,7 +118,7 @@ function run() {
             core.debug(`package url: ${packageUrl}`);
             const downloadedPackagePath = yield tc.downloadTool(packageUrl);
             const extractedFolder = yield tc.extractTar(downloadedPackagePath, 'tools/pscale');
-            const packagePath = yield tc.cacheDir(extractedFolder, 'pscale', version === 'latest' ? latestVersion : version);
+            const packagePath = yield tc.cacheDir(extractedFolder, 'pscale', cacheKey);
             core.addPath(packagePath);
         }
         catch (error) {
