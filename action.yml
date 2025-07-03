@@ -9,6 +9,10 @@ inputs:
     description: 'Version of pscale to install. i.e. v0.106.0. Defaults to latest version.'
     required: false
     default: 'latest'
+  github-token:
+    description: 'GitHub token for authenticated requests to avoid rate limiting'
+    required: false
+    default: ${{ github.token }}
 runs:
   using: 'node20'
   main: 'dist/index.js'
