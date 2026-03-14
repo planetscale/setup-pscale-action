@@ -55,9 +55,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
-const linuxPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_linux_amd64.tar.gz';
-const darwinPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_macOS_amd64.tar.gz';
-const windowsPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_windows_amd64.zip';
+const linuxPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_linux_{{ARCH}}.tar.gz';
+const darwinPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_macOS_{{ARCH}}.tar.gz';
+const windowsPackageUrl = 'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_windows_{{ARCH}}.zip';
 function getLatestReleaseVersion(githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const apiUrl = `https://api.github.com/repos/planetscale/cli/releases/latest`;
@@ -82,7 +82,9 @@ function run() {
             const version = core.getInput('version') || 'latest';
             const githubToken = core.getInput('github-token') || process.env.GITHUB_TOKEN;
             validateVersion(version);
+            const arch = process.arch === 'arm64' ? 'arm64' : 'amd64';
             core.debug(`requested version: ${version}`);
+            core.debug(`detected architecture: ${arch}`);
             if (process.platform === 'win32') {
                 packageUrl = windowsPackageUrl;
             }
@@ -98,12 +100,14 @@ function run() {
                 core.debug(`latest version: ${latestVersion}`);
                 packageUrl = packageUrl
                     .replace(/{{VERSION}}/g, latestVersion)
-                    .replace(/{{VERSION2}}/g, latestVersion.replace(/^v/, ''));
+                    .replace(/{{VERSION2}}/g, latestVersion.replace(/^v/, ''))
+                    .replace(/{{ARCH}}/g, arch);
             }
             else {
                 packageUrl = packageUrl
                     .replace(/{{VERSION}}/g, version)
-                    .replace(/{{VERSION2}}/g, version.replace(/^v/, ''));
+                    .replace(/{{VERSION2}}/g, version.replace(/^v/, ''))
+                    .replace(/{{ARCH}}/g, arch);
             }
             core.debug(`package url: ${packageUrl}`);
             const auth = githubToken ? `Bearer ${githubToken}` : undefined;
