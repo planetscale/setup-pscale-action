@@ -3,11 +3,11 @@ import * as tc from '@actions/tool-cache';
 import axios from 'axios';
 
 const linuxPackageUrl =
-  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_linux_amd64.tar.gz';
+  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_linux_{{ARCH}}.tar.gz';
 const darwinPackageUrl =
-  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_macOS_amd64.tar.gz';
+  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_macOS_{{ARCH}}.tar.gz';
 const windowsPackageUrl =
-  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_windows_amd64.zip';
+  'https://github.com/planetscale/cli/releases/download/{{VERSION}}/pscale_{{VERSION2}}_windows_{{ARCH}}.zip';
 
 async function getLatestReleaseVersion(githubToken?: string): Promise<string> {
   const apiUrl = `https://api.github.com/repos/planetscale/cli/releases/latest`;
@@ -39,7 +39,9 @@ async function run(): Promise<void> {
 
     validateVersion(version);
 
+    const arch = process.arch === 'arm64' ? 'arm64' : 'amd64';
     core.debug(`requested version: ${version}`);
+    core.debug(`detected architecture: ${arch}`);
     if (process.platform === 'win32') {
       packageUrl = windowsPackageUrl;
     } else if (process.platform === 'darwin') {
@@ -54,11 +56,13 @@ async function run(): Promise<void> {
       core.debug(`latest version: ${latestVersion}`);
       packageUrl = packageUrl
         .replace(/{{VERSION}}/g, latestVersion)
-        .replace(/{{VERSION2}}/g, latestVersion.replace(/^v/, ''));
+        .replace(/{{VERSION2}}/g, latestVersion.replace(/^v/, ''))
+        .replace(/{{ARCH}}/g, arch);
     } else {
       packageUrl = packageUrl
         .replace(/{{VERSION}}/g, version)
-        .replace(/{{VERSION2}}/g, version.replace(/^v/, ''));
+        .replace(/{{VERSION2}}/g, version.replace(/^v/, ''))
+        .replace(/{{ARCH}}/g, arch);
     }
 
     core.debug(`package url: ${packageUrl}`);
