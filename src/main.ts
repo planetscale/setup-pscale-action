@@ -73,10 +73,10 @@ async function run(): Promise<void> {
       undefined,
       auth
     );
-    const extractedFolder = await tc.extractTar(
-      downloadedPackagePath,
-      'tools/pscale'
-    );
+    const extractedFolder =
+      process.platform === 'win32'
+        ? await tc.extractZip(downloadedPackagePath, 'tools/pscale')
+        : await tc.extractTar(downloadedPackagePath, 'tools/pscale');
 
     const packagePath = await tc.cacheDir(
       extractedFolder,
