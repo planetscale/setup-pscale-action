@@ -21,12 +21,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set Node.js 16.x
-        uses: actions/setup-node@v3.6.0
+      - name: Set Node.js 24.x
+        uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 24.x
 
       - name: Install dependencies
         run: npm ci
