@@ -39,7 +39,11 @@ Since git branch names allow more possibilities, we can use the following code t
 
 ```yaml
 - name: Rename branch name
-  run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+  env:
+    HEAD_REF: ${{ github.head_ref }}
+  run: |
+    branch_name=$(printf '%s' "$HEAD_REF" | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+    echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
 ```
 
 This makes `${{ env.PSCALE_BRANCH_NAME }}` available for use in the rest of the workflow.
@@ -104,7 +108,7 @@ Then, this text file will be used as a comment on the pull request.
     pscale deploy-request diff ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.DEPLOY_REQUEST_NUMBER }}  -f json | jq -r '.[].raw' >> migration-message.txt
     echo "\`\`\`" >> migration-message.txt
 - name: Comment PR - db migrated
-  uses: thollander/actions-comment-pull-request@v2
+  uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
   with:
     filePath: migration-message.txt
 ```
@@ -144,16 +148,20 @@ on:
 
 jobs:
   planetscale:
-    permissions: 
+    permissions:
       pull-requests: write
       contents: read
 
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
       - name: Set branch name
-        run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          branch_name=$(printf '%s' "$HEAD_REF" | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+          echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
       - name: Create branch
         env:
           PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
@@ -170,18 +178,12 @@ jobs:
             echo "Branch does not exist. Creating."
             pscale branch create ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.PSCALE_BRANCH_NAME }} --wait
           fi
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.2.1
-      - name: Cache Ruby gems
-        uses: actions/cache@v3
-        with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gems-
+          bundler-cache: true
       - name: Install dependencies
         run: |
           bundle config --local path vendor/bundle
@@ -241,7 +243,7 @@ jobs:
           pscale deploy-request diff ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.DEPLOY_REQUEST_NUMBER }}  -f json | jq -r '.[].raw' >> migration-message.txt
           echo "\`\`\`" >> migration-message.txt
       - name: Comment PR - db migrated
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         if: ${{ env.DR_OPENED }}
         with:
           filePath: migration-message.txt
@@ -261,6 +263,9 @@ on:
       - closed
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
@@ -268,11 +273,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
       - name: Setup pscale
         uses: planetscale/setup-pscale-action@v1
       - name: Set branch name
-        run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        run: |
+          branch_name=$(printf '%s' "$HEAD_REF" | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+          echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
+        env:
+          HEAD_REF: ${{ github.head_ref }}
       - name: Get Deploy Requests
         if: github.event.pull_request.merged == true
         env:
@@ -290,7 +299,7 @@ jobs:
         run: |
           pscale deploy-request deploy ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.DEPLOY_REQUEST_NUMBER }} --wait --org ${{ secrets.PLANETSCALE_ORG_NAME }}
       - name: Setup fly
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1
       - name: Deploy to fly
         run: flyctl deploy --remote-only --strategy immediate
         env:
