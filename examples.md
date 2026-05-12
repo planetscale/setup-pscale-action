@@ -148,7 +148,7 @@ on:
 
 jobs:
   planetscale:
-    permissions: 
+    permissions:
       pull-requests: write
       contents: read
 
@@ -262,6 +262,9 @@ on:
     types:
       - closed
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
