@@ -39,7 +39,11 @@ Since git branch names allow more possibilities, we can use the following code t
 
 ```yaml
 - name: Rename branch name
-  run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+  env:
+    HEAD_REF: ${{ github.head_ref }}
+  run: |
+    branch_name=$(printf '%s' "$HEAD_REF" | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+    echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
 ```
 
 This makes `${{ env.PSCALE_BRANCH_NAME }}` available for use in the rest of the workflow.
@@ -153,7 +157,11 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: Set branch name
-        run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          branch_name=$(printf '%s' "$HEAD_REF" | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+          echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
       - name: Create branch
         env:
           PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
@@ -266,7 +274,11 @@ jobs:
       - name: Setup pscale
         uses: planetscale/setup-pscale-action@v1
       - name: Set branch name
-        run:  echo "PSCALE_BRANCH_NAME=$(echo ${{ github.head_ref }} | tr -cd '[:alnum:]-'| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        run: |
+          branch_name=$(printf '%s' "$HEAD_REF" | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+          echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
+        env:
+          HEAD_REF: ${{ github.head_ref }}
       - name: Get Deploy Requests
         if: github.event.pull_request.merged == true
         env:
